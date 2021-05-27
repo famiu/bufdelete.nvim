@@ -12,8 +12,6 @@ local function buf_kill(kill_command, bufnr, force)
 
     if force then
         kill_command = kill_command .. '!'
-    else
-        kill_command = 'bd'
     end
 
     -- Get list of windows IDs with the buffer to close
