@@ -78,14 +78,18 @@ function M.bufwipeout(bufnr, force)
     buf_kill('bw', bufnr, force)
 end
 
--- Wrapper around bufdelete for use with vim commands
-function M.bufdelete_cmd(bufnr, bang)
-    M.bufdelete(tonumber(bufnr == '' and '0' or bufnr), bang == '!')
+-- Wrapper around buf_kill for use with vim commands
+local function buf_kill_cmd(kill_command, bufnr, bang)
+    buf_kill(kill_command, tonumber(bufnr == '' and '0' or bufnr), bang == '!')
 end
 
--- Wrapper around bufwipeout for use with vim commands
+-- Wrappers around bufdelete and bufwipeout for use with vim commands
+function M.bufdelete_cmd(bufnr, bang)
+    buf_kill_cmd('bd', bufnr, bang)
+end
+
 function M.bufwipeout_cmd(bufnr, bang)
-    M.bufwipeout(tonumber(bufnr == '' and '0' or bufnr), bang == '!')
+    buf_kill_cmd('bw', bufnr, bang)
 end
 
 return M
