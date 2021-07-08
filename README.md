@@ -46,4 +46,3 @@ This plugin is still quite new and might have some bugs. And in case it does, fe
 ## Self-plug
 If you liked this plugin, also check out:
 - [feline.nvim](https://github.com/famiu/feline.nvim) - A nice customizable statusline for Neovim written in Lua.
-- [nvim-reload](https://github.com/famiu/nvim-reload) - Plugin to easily reload your Neovim config.
