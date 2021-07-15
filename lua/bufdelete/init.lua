@@ -1,4 +1,3 @@
-local fn = vim.fn
 local api = vim.api
 local cmd = vim.cmd
 
@@ -15,9 +14,9 @@ local function buf_kill(kill_command, bufnr, force)
     end
 
     -- Get list of windows IDs with the buffer to close
-    local windows = vim.tbl_map(
-        function(win) return win.winid end,
-        vim.tbl_filter(function(win) return win.bufnr == bufnr end, fn.getwininfo())
+    local windows = vim.tbl_filter(
+        function(win) return api.nvim_win_get_buf(win) == bufnr end,
+        api.nvim_list_wins()
     )
 
     if #windows == 0 then
@@ -25,9 +24,9 @@ local function buf_kill(kill_command, bufnr, force)
     end
 
     -- Get list of active buffers
-    local buffers = vim.tbl_map(
-        function(buf) return buf.bufnr end,
-        vim.tbl_filter(function(buf) return buf.listed == 1 end, fn.getbufinfo())
+    local buffers = vim.tbl_filter(
+        function(buf) return api.nvim_buf_is_loaded(buf) end,
+        api.nvim_list_bufs()
     )
 
     -- If buffer is modified and force isn't true, print error and abort
