@@ -39,29 +39,19 @@ local function buf_kill(kill_command, bufnr, force)
         api.nvim_list_bufs()
     )
 
-    local next_buffer
-
-    -- If there is only one buffer (which has to be the current one), create a new buffer
+    -- If there is only one buffer (which has to be the current one), vim will
+    -- create a new buffer on :bd.  If there are only two buffers (one of which
+    -- has to be the current one), vim will switch to the other buffer on :bd.
     -- Otherwise, pick the next buffer (wrapping around if necessary)
-    if #buffers == 1 then
-        next_buffer = api.nvim_create_buf(1, 0)
-
-        if next_buffer == 0 then
-            api.nvim_err_writeln("Failed to create new buffer!")
-            return
-        end
-    else
+    if #buffers > 2 then
         for i, v in ipairs(buffers) do
             if v == bufnr then
-                next_buffer = buffers[i % #buffers + 1]
-                break
+                local next_buffer = buffers[i % #buffers + 1]
+                for _, win in ipairs(windows) do
+                    api.nvim_win_set_buf(win, next_buffer)
+                end
             end
         end
-    end
-
-    -- Switch to the picked buffer for each window in 'windows'
-    for _, win in ipairs(windows) do
-        api.nvim_win_set_buf(win, next_buffer)
     end
 
     cmd(string.format('%s %d', kill_command, bufnr))
