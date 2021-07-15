@@ -5,6 +5,16 @@ local M = {}
 
 -- Common kill function for bdelete and bwipeout
 local function buf_kill(kill_command, bufnr, force)
+    -- If buffer is modified and force isn't true, print error and abort
+    if not force and vim.bo.modified then
+        return api.nvim_err_writeln(
+            string.format(
+                'No write since last change for buffer %d (set force to true to override)',
+                bufnr
+            )
+        )
+    end
+
     if bufnr == 0 or bufnr == nil then
         bufnr = api.nvim_get_current_buf()
     end
@@ -28,16 +38,6 @@ local function buf_kill(kill_command, bufnr, force)
         function(buf) return api.nvim_buf_is_loaded(buf) end,
         api.nvim_list_bufs()
     )
-
-    -- If buffer is modified and force isn't true, print error and abort
-    if not force and vim.bo.modified then
-        return api.nvim_err_writeln(
-            string.format(
-                'No write since last change for buffer %d (set force to true to override)',
-                bufnr
-            )
-        )
-    end
 
     local next_buffer
 
