@@ -1,12 +1,13 @@
 local api = vim.api
 local cmd = vim.cmd
+local bo = vim.bo
 
 local M = {}
 
 -- Common kill function for bdelete and bwipeout
 local function buf_kill(kill_command, bufnr, force)
     -- If buffer is modified and force isn't true, print error and abort
-    if not force and vim.bo.modified then
+    if not force and bo.modified then
         return api.nvim_err_writeln(
             string.format(
                 'No write since last change for buffer %d (set force to true to override)',
@@ -35,7 +36,9 @@ local function buf_kill(kill_command, bufnr, force)
 
     -- Get list of active buffers
     local buffers = vim.tbl_filter(
-        function(buf) return api.nvim_buf_is_loaded(buf) end,
+        function(buf) return
+            bo[buf].buflisted and api.nvim_buf_is_valid(buf)
+        end,
         api.nvim_list_bufs()
     )
 
