@@ -44,7 +44,7 @@ local function buf_kill(kill_command, bufnr, force)
 
     -- If there is only one buffer (which has to be the current one), vim will
     -- create a new buffer on :bd.  If there are only two buffers (one of which
-    -- has to be the current one), vim will switch to the other buffer on :bd.
+    -- has to be the current one), vim will switch to the other buffer on :bd
     -- Otherwise, pick the next buffer (wrapping around if necessary)
     if #buffers > 2 then
         for i, v in ipairs(buffers) do
@@ -57,7 +57,11 @@ local function buf_kill(kill_command, bufnr, force)
         end
     end
 
-    cmd(string.format('%s %d', kill_command, bufnr))
+    -- Check if buffer still exists, to ensure the target buffer wasn't killed
+    -- due to options like bufhidden=wipe.
+    if(api.nvim_buf_is_valid(bufnr)) then
+        cmd(string.format('%s %d', kill_command, bufnr))
+    end
 end
 
 -- Kill the target buffer (or the current one if 0/nil) while retaining window layout
