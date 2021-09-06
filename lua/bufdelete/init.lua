@@ -46,7 +46,7 @@ local function buf_kill(kill_command, bufnr, force)
     -- create a new buffer on :bd.  If there are only two buffers (one of which
     -- has to be the current one), vim will switch to the other buffer on :bd
     -- Otherwise, pick the next buffer (wrapping around if necessary)
-    if #buffers > 2 then
+    if #buffers > 1 then
         for i, v in ipairs(buffers) do
             if v == bufnr then
                 local next_buffer = buffers[i % #buffers + 1]
