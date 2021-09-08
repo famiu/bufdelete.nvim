@@ -58,7 +58,7 @@ local function buf_kill(kill_command, bufnr, force)
 
     -- Check if buffer still exists, to ensure the target buffer wasn't killed
     -- due to options like bufhidden=wipe.
-    if(api.nvim_buf_is_valid(bufnr)) then
+    if bo[bufnr].buflisted and api.nvim_buf_is_valid(bufnr) then
         cmd(string.format('%s %d', kill_command, bufnr))
     end
 end
