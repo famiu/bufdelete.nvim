@@ -37,7 +37,7 @@ local function buf_kill(kill_command, bufnr, force)
     -- Get list of active buffers
     local buffers = vim.tbl_filter(
         function(buf) return
-            bo[buf].buflisted and api.nvim_buf_is_valid(buf)
+            api.nvim_buf_is_valid(buf) and bo[buf].buflisted
         end,
         api.nvim_list_bufs()
     )
@@ -58,7 +58,7 @@ local function buf_kill(kill_command, bufnr, force)
 
     -- Check if buffer still exists, to ensure the target buffer wasn't killed
     -- due to options like bufhidden=wipe.
-    if bo[bufnr].buflisted and api.nvim_buf_is_valid(bufnr) then
+    if api.nvim_buf_is_valid(bufnr) and bo[bufnr].buflisted then
         cmd(string.format('%s %d', kill_command, bufnr))
     end
 end
