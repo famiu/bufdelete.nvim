@@ -7,7 +7,7 @@ local M = {}
 -- Common kill function for bdelete and bwipeout
 local function buf_kill(kill_command, bufnr, force)
     -- If buffer is modified and force isn't true, print error and abort
-    if not force and bo.modified then
+    if not force and vim.api.nvim_buf_get_option(bufnr, "modified") then
         return api.nvim_err_writeln(
             string.format(
                 'No write since last change for buffer %d (set force to true to override)',
