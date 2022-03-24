@@ -40,6 +40,10 @@ require('bufdelete').bufwipeout(100)
 ## Behavior
 By default, when you delete a buffer, bufdelete.nvim switches to the next buffer (wrapping around if necessary) in every window where the target buffer was open. If no buffer other than the target buffer was open, bufdelete.nvim creates an empty buffer and switches to it instead.
 
-## Self-plug
-If you liked this plugin, also check out:
+## Support
+
+If you liked this plugin, consider [supporting me.](https://www.buymeacoffee.com/famiuhaque)
+
+Also check out some of my other work:
+
 - [feline.nvim](https://github.com/famiu/feline.nvim) - A nice customizable statusline for Neovim written in Lua.
