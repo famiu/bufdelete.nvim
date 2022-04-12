@@ -30,10 +30,6 @@ local function buf_kill(kill_command, bufnr, force)
         api.nvim_list_wins()
     )
 
-    if #windows == 0 then
-        return
-    end
-
     -- Get list of active buffers
     local buffers = vim.tbl_filter(
         function(buf) return
