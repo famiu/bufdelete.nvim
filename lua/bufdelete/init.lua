@@ -1,5 +1,6 @@
 local api = vim.api
-local cmd = vim.cmd
+local cmd = api.nvim_command
+local fn = vim.fn
 local bo = vim.bo
 
 local M = {}
@@ -8,12 +9,23 @@ local M = {}
 local function buf_kill(kill_command, bufnr, force)
     -- If buffer is modified and force isn't true, print error and abort
     if not force and bo[bufnr].modified then
-        return api.nvim_err_writeln(
+        api.nvim_echo({{
             string.format(
-                'No write since last change for buffer %d (set force to true to override)',
+                'No write since last change for buffer %d. Would you like to:\n' ..
+                '(s)ave and close\n(i)gnore changes and close\n(c)ancel',
                 bufnr
             )
-        )
+        }}, false, {})
+
+        local choice = string.char(vim.fn.getchar())
+
+        if choice == 's' or choice == 'S' then
+            cmd('write')
+        elseif choice == 'i' or choice == 'I' then
+            force = true;
+        else
+            return
+        end
     end
 
     if bufnr == 0 or bufnr == nil then
