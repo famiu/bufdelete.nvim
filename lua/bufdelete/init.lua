@@ -52,6 +52,8 @@ local function buf_kill(kill_command, bufnr, force)
                 for _, win in ipairs(windows) do
                     api.nvim_win_set_buf(win, next_buffer)
                 end
+
+                break
             end
         end
     end
