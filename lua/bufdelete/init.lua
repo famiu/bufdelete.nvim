@@ -41,10 +41,10 @@ local function buf_kill(kill_command, bufnr, force)
         api.nvim_list_wins()
     )
 
-    -- Get list of active buffers
+    -- Get list of valid and listed buffers
     local buffers = vim.tbl_filter(
         function(buf) return
-            api.nvim_buf_is_valid(buf)
+            api.nvim_buf_is_valid(buf) and bo[buf].buflisted
         end,
         api.nvim_list_bufs()
     )
@@ -55,7 +55,7 @@ local function buf_kill(kill_command, bufnr, force)
     if #buffers > 1 then
         for i, v in ipairs(buffers) do
             if v == bufnr then
-                local next_buffer = buffers[i % #buffers + 1]
+                local next_buffer = buffers[(i + 1) % #buffers]
                 for _, win in ipairs(windows) do
                     api.nvim_win_set_buf(win, next_buffer)
                 end
