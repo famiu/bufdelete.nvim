@@ -55,7 +55,7 @@ local function buf_kill(kill_command, bufnr, force)
     if #buffers > 1 then
         for i, v in ipairs(buffers) do
             if v == bufnr then
-                local next_buffer = buffers[(i + 1) % #buffers]
+                local next_buffer = buffers[i % #buffers + 1]
                 for _, win in ipairs(windows) do
                     api.nvim_win_set_buf(win, next_buffer)
                 end
