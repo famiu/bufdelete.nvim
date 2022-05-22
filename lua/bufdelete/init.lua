@@ -1,5 +1,4 @@
 local api = vim.api
-local cmd = api.nvim_command
 local bo = vim.bo
 
 local M = {}
@@ -19,7 +18,7 @@ local function buf_kill(kill_command, bufnr, force)
         local choice = string.char(vim.fn.getchar())
 
         if choice == 's' or choice == 'S' then
-            cmd('write')
+            vim.cmd('write')
         elseif choice == 'i' or choice == 'I' then
             force = true;
         else
@@ -49,7 +48,7 @@ local function buf_kill(kill_command, bufnr, force)
         api.nvim_list_bufs()
     )
 
-    -- If there is only one buffer (which has to be the current one), vim will
+    -- If there is only one buffer (which has to be the current one), Neovim will automatically
     -- create a new buffer on :bd.
     -- For more than one buffer, pick the next buffer (wrapping around if necessary)
     if #buffers > 1 then
@@ -68,7 +67,10 @@ local function buf_kill(kill_command, bufnr, force)
     -- Check if buffer still exists, to ensure the target buffer wasn't killed
     -- due to options like bufhidden=wipe.
     if api.nvim_buf_is_valid(bufnr) then
-        cmd(string.format('%s %d', kill_command, bufnr))
+        -- Execute the BDeletePre and BDeletePost autocommands before and after deleting the buffer
+        api.nvim_exec_autocmds("User", { pattern = "BDeletePre" })
+        vim.cmd(string.format('%s %d', kill_command, bufnr))
+        api.nvim_exec_autocmds("User", { pattern = "BDeletePost" })
     end
 end
 
