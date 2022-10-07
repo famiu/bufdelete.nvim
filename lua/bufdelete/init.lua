@@ -9,6 +9,16 @@ end
 
 local M = {}
 
+-- Check if buffer needs deletion. Ensures that only loaded buffers are deleted while all valid
+-- buffers can be wiped out.
+local function buf_needs_deletion(bufnr, wipeout)
+    if wipeout then
+        return api.nvim_buf_is_valid(bufnr)
+    else
+        return api.nvim_buf_is_loaded(bufnr)
+    end
+end
+
 -- Common kill function for Bdelete and Bwipeout.
 local function buf_kill(range, force, wipeout)
     if range == nil then
@@ -20,17 +30,19 @@ local function buf_kill(range, force, wipeout)
         range[2] = range[1]
     end
 
-    -- Whether to forcibly close buffer. If true, use force. If false, simply ignore the buffer.
-    local bufnr_force
+    -- Target buffers. Stored in a set-like format to quickly check if buffer needs to be deleted.
+    local target_buffers = {}
+    for bufnr=range[1], range[2] do
+        if buf_needs_deletion(bufnr, wipeout) then
+            target_buffers[bufnr] = true
+        end
+    end
 
     -- If force is disabled, check for modified buffers in range.
     if not force then
-        -- List of modified buffers the user asked to close with force.
-        bufnr_force = {}
-
-        for bufnr=range[1], range[2] do
+        for bufnr, _ in pairs(target_buffers) do
             -- If buffer is modified, prompt user for action.
-            if api.nvim_buf_is_loaded(bufnr) and bo[bufnr].modified then
+            if bo[bufnr].modified then
                 api.nvim_echo({{
                     string.format(
                         'No write since last change for buffer %d (%s). Would you like to:\n' ..
@@ -43,9 +55,9 @@ local function buf_kill(range, force, wipeout)
 
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
                     api.nvim_buf_call(bufnr, function() cmd.write() end)
-                elseif choice == 'i' or choice == 'I' then  -- Ignore and forcibly close.
-                    bufnr_force[bufnr] = true
-                end  -- Otherwise, do nothing with this buffer.
+                elseif choice == 'c' or choice == 'C' then  -- Cancel, remove buffer from targets.
+                    target_buffers[bufnr] = nil
+                end
 
                 -- Clear message area.
                 cmd.echo('""')
@@ -54,29 +66,27 @@ local function buf_kill(range, force, wipeout)
         end
     end
 
+    if next(target_buffers) == nil then
+        -- No targets, do nothing
+        api.nvim_err_writeln("bufdelete.nvim: No buffers were deleted")
+        return
+    end
+
     -- Get list of windows IDs with the buffers to close.
     local windows = vim.tbl_filter(
         function(win)
-            local bufnr = api.nvim_win_get_buf(win)
-            return bufnr >= range[1] and bufnr <= range[2]
+            return target_buffers[api.nvim_win_get_buf(win)] ~= nil
         end,
         api.nvim_list_wins()
     )
 
-    -- Get list of loaded and listed buffers.
-    local buffers = vim.tbl_filter(
-        function(buf)
-            return api.nvim_buf_is_loaded(buf) and bo[buf].buflisted
-        end,
-        api.nvim_list_bufs()
-    )
-
-    -- Get list of loaded and listed buffers outside the range.
+    -- Get list of valid and listed buffers outside the range.
     local buffers_outside_range = vim.tbl_filter(
         function(buf)
-            return buf < range[1] or buf > range[2]
+            return api.nvim_buf_is_valid(buf) and bo[buf].buflisted
+                and (buf < range[1] or buf > range[2])
         end,
-        buffers
+        api.nvim_list_bufs()
     )
 
     -- Switch the windows containing the target buffers to a buffer that's not going to be closed.
@@ -100,7 +110,7 @@ local function buf_kill(range, force, wipeout)
         if switch_bufnr == nil then
             switch_bufnr = buffer_before_range
         end
-    -- Otherwise create a new buffer and switch all windows to that.
+    -- Otherwise create a new buffer and switch all windows to it.
     else
         switch_bufnr = api.nvim_create_buf(true, false)
 
@@ -118,17 +128,16 @@ local function buf_kill(range, force, wipeout)
     api.nvim_exec_autocmds("User", {
         pattern = string.format("BDeletePre {%d,%d}", range[1], range[2])
     })
-    -- Close all target buffers one by one
-    for bufnr=range[1], range[2] do
-        if api.nvim_buf_is_loaded(bufnr) then
-            -- If buffer is modified and it shouldn't be forced to close, do nothing.
-            local use_force = force or bufnr_force[bufnr]
-            if not bo[bufnr].modified or use_force then
-                if wipeout then
-                    cmd.bwipeout({ args = {bufnr}, bang = use_force })
-                else
-                    cmd.bdelete({ args = {bufnr}, bang = use_force })
-                end
+    -- Close all target buffers one by one.
+    for bufnr, _ in pairs(target_buffers) do
+        -- Check if buffer is still valid as it may be deleted due to options like bufhidden=wipe.
+        if buf_needs_deletion(bufnr, wipeout) then
+            -- Only use force if buffer is modified.
+            local use_force = bo[bufnr].modified
+            if wipeout then
+                cmd.bwipeout({ count = bufnr, bang = use_force })
+            else
+                cmd.bdelete({ count = bufnr, bang = use_force })
             end
         end
     end
@@ -140,9 +149,9 @@ end
 
 -- Find the first buffer whose name matches the provided pattern. Returns buffer handle.
 -- Errors if buffer is not found.
-local function find_buffer_with_pattern(pat)
+local function find_buffer_with_pattern(pat, wipeout)
     for _, bufnr in ipairs(api.nvim_list_bufs()) do
-        if api.nvim_buf_is_loaded(bufnr) and api.nvim_buf_get_name(bufnr):match(pat) then
+        if buf_needs_deletion(bufnr, wipeout) and api.nvim_buf_get_name(bufnr):match(pat) then
             return bufnr
         end
     end
@@ -150,7 +159,7 @@ local function find_buffer_with_pattern(pat)
     api.nvim_err_writeln("bufdelete.nvim: No matching buffer for " .. pat)
 end
 
-local function get_range(buffer_or_range)
+local function get_range(buffer_or_range, wipeout)
     if buffer_or_range == nil then
         return { 0, 0 }
     elseif type(buffer_or_range) == 'number' and buffer_or_range >= 0
@@ -158,7 +167,7 @@ local function get_range(buffer_or_range)
     then
         return { buffer_or_range, buffer_or_range }
     elseif type(buffer_or_range) == 'string' then
-        local bufnr = find_buffer_with_pattern(buffer_or_range)
+        local bufnr = find_buffer_with_pattern(buffer_or_range, wipeout)
         return bufnr ~= nil and { bufnr, bufnr } or nil
     elseif type(buffer_or_range) == 'table' and #buffer_or_range == 2
         and type(buffer_or_range[1]) == 'number' and buffer_or_range[1] > 0
@@ -179,13 +188,13 @@ end
 -- Kill the target buffer(s) (or the current one if 0/nil) while retaining window layout.
 -- Can accept range to kill multiple buffers.
 function M.bufdelete(buffer_or_range, force)
-    buf_kill(get_range(buffer_or_range), force, false)
+    buf_kill(get_range(buffer_or_range, false), force, false)
 end
 
 -- Wipe the target buffer(s) (or the current one if 0/nil) while retaining window layout.
 -- Can accept range to wipe multiple buffers.
 function M.bufwipeout(buffer_or_range, force)
-    buf_kill(get_range(buffer_or_range), force, true)
+    buf_kill(get_range(buffer_or_range, true), force, true)
 end
 
 -- Wrapper around buf_kill for use with vim commands.
@@ -193,7 +202,7 @@ local function buf_kill_cmd(opts, wipeout)
     local range
     if opts.range == 0 then
         if #opts.fargs == 1 then  -- Buffer name is provided
-            local bufnr = find_buffer_with_pattern(opts.fargs[1])
+            local bufnr = find_buffer_with_pattern(opts.fargs[1], wipeout)
             if bufnr == nil then
                 return
             end
