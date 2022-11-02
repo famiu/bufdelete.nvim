@@ -132,8 +132,8 @@ local function buf_kill(range, force, wipeout)
     for bufnr, _ in pairs(target_buffers) do
         -- Check if buffer is still valid as it may be deleted due to options like bufhidden=wipe.
         if buf_needs_deletion(bufnr, wipeout) then
-            -- Only use force if buffer is modified.
-            local use_force = bo[bufnr].modified
+            -- Only use force if buffer is modified or if `force` is true.
+            local use_force = force or bo[bufnr].modified
             if wipeout then
                 cmd.bwipeout({ count = bufnr, bang = use_force })
             else
