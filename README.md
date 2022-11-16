@@ -57,7 +57,3 @@ bufdelete.nvim triggers the following User autocommands (see `:help User` for mo
 - `BDeletePost {range_start,range_end}` - After deleting a buffer.
 
 In both of these cases, `range_start` and `range_end` are replaced by the start and end of the buffer range, respectively. For example, if you use `require('bufdelete').bufdelete({1, 42})`, the autocommand patterns will be `BDeletePre {1,42}` and `BDeletePost {1,42}`.
-
-## Support
-
-<a href="https://www.buymeacoffee.com/famiuhaque" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-blue.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
