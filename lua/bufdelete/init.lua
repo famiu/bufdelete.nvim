@@ -56,8 +56,8 @@ local function buf_kill(range, force, wipeout)
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
                     api.nvim_buf_call(bufnr, function() cmd.write() end)
                 elseif choice == 'i' or choice == 'I' then  -- Ignore, force close
-				else
-					target_buffers[bufnr] = nil
+                else
+                    target_buffers[bufnr] = nil
                 end
 
                 -- Clear message area.
