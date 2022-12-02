@@ -40,7 +40,7 @@ local function buf_kill(range, force, wipeout)
 
     -- If force is disabled, check for modified buffers in range.
     if not force then
-        for bufnr, _ in pairs(target_buffers) do
+        for bufnr, buf in pairs(target_buffers) do
             -- If buffer is modified, prompt user for action.
             if bo[bufnr].modified then
                 api.nvim_echo({{
@@ -55,14 +55,16 @@ local function buf_kill(range, force, wipeout)
 
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
                     api.nvim_buf_call(bufnr, function() cmd.write() end)
-                elseif choice == 'c' or choice == 'C' then  -- Cancel, remove buffer from targets.
-                    target_buffers[bufnr] = nil
+                elseif choice == 'i' or choice == 'I' then  -- Ignore, force close
+				else
+					target_buffers[bufnr] = nil
                 end
 
                 -- Clear message area.
                 cmd.echo('""')
                 cmd.redraw()
             end
+
         end
     end
 
