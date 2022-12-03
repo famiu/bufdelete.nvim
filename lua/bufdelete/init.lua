@@ -40,7 +40,7 @@ local function buf_kill(range, force, wipeout)
 
     -- If force is disabled, check for modified buffers in range.
     if not force then
-        for bufnr, buf in pairs(target_buffers) do
+        for bufnr, _ in pairs(target_buffers) do
             -- If buffer is modified, prompt user for action.
             if bo[bufnr].modified then
                 api.nvim_echo({{
@@ -63,7 +63,6 @@ local function buf_kill(range, force, wipeout)
                 cmd.echo('""')
                 cmd.redraw()
             end
-
         end
     end
 
