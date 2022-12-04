@@ -55,7 +55,7 @@ local function buf_kill(range, force, wipeout)
 
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
                     api.nvim_buf_call(bufnr, function() cmd.write() end)
-                elseif choice == 'c' or choice == 'C' then  -- Cancel, remove buffer from targets.
+                elseif choice ~= 'i' and choice ~= 'I' then  -- If not ignored, remove buffer from targets.
                     target_buffers[bufnr] = nil
                 end
 
