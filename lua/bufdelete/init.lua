@@ -19,6 +19,17 @@ local function buf_needs_deletion(bufnr, wipeout)
     end
 end
 
+local function prompt(text, bufnr)
+    api.nvim_echo({{
+                string.format(text, bufnr, api.nvim_buf_get_name(bufnr))
+        }}, false, {});
+
+    local choice = string.char(vim.fn.getchar())
+
+    return choice;
+end
+
+
 -- Common kill function for Bdelete and Bwipeout.
 local function buf_kill(range, force, wipeout)
     if range == nil then
@@ -43,15 +54,12 @@ local function buf_kill(range, force, wipeout)
         for bufnr, _ in pairs(target_buffers) do
             -- If buffer is modified, prompt user for action.
             if bo[bufnr].modified then
-                api.nvim_echo({{
-                    string.format(
+
+                local choice = prompt(
                         'No write since last change for buffer %d (%s). Would you like to:\n' ..
                         '(s)ave and close\n(i)gnore changes and close\n(c)ancel',
-                        bufnr, api.nvim_buf_get_name(bufnr)
-                    )
-                }}, false, {})
-
-                local choice = string.char(vim.fn.getchar())
+                        bufnr
+                    );
 
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
                     api.nvim_buf_call(bufnr, function() cmd.write() end)
