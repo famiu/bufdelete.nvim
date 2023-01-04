@@ -59,9 +59,13 @@ local function buf_kill(range, force, wipeout)
                     target_buffers[bufnr] = nil
                 end
 
+
                 -- Clear message area.
                 cmd.echo('""')
                 cmd.redraw()
+
+            elseif bo[bufnr].buftype == 'terminal' then
+                print('its a terminal');
             end
         end
     end
