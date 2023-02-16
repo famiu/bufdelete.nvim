@@ -19,6 +19,13 @@ local function buf_needs_deletion(bufnr, wipeout)
     end
 end
 
+-- Prompt user for choice.
+-- This captures the first character inputted after the prompt is shown and returns it.
+local function char_prompt(text)
+    api.nvim_echo({{ text }}, false, {})
+    return string.char(vim.fn.getchar())
+end
+
 -- Common kill function for Bdelete and Bwipeout.
 local function buf_kill(range, force, wipeout)
     if range == nil then
@@ -43,15 +50,13 @@ local function buf_kill(range, force, wipeout)
         for bufnr, _ in pairs(target_buffers) do
             -- If buffer is modified, prompt user for action.
             if bo[bufnr].modified then
-                api.nvim_echo({{
+                local choice = char_prompt(
                     string.format(
                         'No write since last change for buffer %d (%s). Would you like to:\n' ..
                         '(s)ave and close\n(i)gnore changes and close\n(c)ancel',
                         bufnr, api.nvim_buf_get_name(bufnr)
                     )
-                }}, false, {})
-
-                local choice = string.char(vim.fn.getchar())
+                )
 
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
                     api.nvim_buf_call(bufnr, function() cmd.write() end)
@@ -62,6 +67,19 @@ local function buf_kill(range, force, wipeout)
                 -- Clear message area.
                 cmd.echo('""')
                 cmd.redraw()
+            elseif bo[bufnr].buftype == 'terminal'
+            and vim.fn.jobwait({bo[bufnr].channel}, 0)[1] == -1 then
+                local choice = char_prompt(
+                    string.format(
+                        'Terminal buffer %d (%s) is still running. Would you like to:\n' ..
+                        '(i)gnore and close\n(c)cancel',
+                        bufnr, api.nvim_buf_get_name(bufnr)
+                    )
+                )
+
+                if choice ~= 'i' and choice ~= 'I' then
+                    target_buffers[bufnr] = nil
+                end
             end
         end
     end
@@ -132,8 +150,9 @@ local function buf_kill(range, force, wipeout)
     for bufnr, _ in pairs(target_buffers) do
         -- Check if buffer is still valid as it may be deleted due to options like bufhidden=wipe.
         if buf_needs_deletion(bufnr, wipeout) then
-            -- Only use force if buffer is modified or if `force` is true.
-            local use_force = force or bo[bufnr].modified
+            -- Only use force if buffer is modified, is a terminal or if `force` is true.
+            local use_force = force or bo[bufnr].modified or bo[bufnr].buftype == 'terminal'
+
             if wipeout then
                 cmd.bwipeout({ count = bufnr, bang = use_force })
             else
