@@ -21,9 +21,13 @@ end
 
 -- Prompt user for choice.
 -- This captures the first character inputted after the prompt is shown and returns it.
-local function char_prompt(text)
-    api.nvim_echo({{ text }}, false, {})
-    return string.char(vim.fn.getchar())
+local function char_prompt(text, choices)
+    local choice = vim.fn.confirm(text, table.concat(choices, "\n"), "", "Q")
+    if choice == 0 then
+        return "C" -- Cancel if no choice was made
+    else
+        return string.match(choices[choice], "&?(%a)")
+    end
 end
 
 -- Common kill function for Bdelete and Bwipeout.
@@ -52,10 +56,10 @@ local function buf_kill(range, force, wipeout)
             if bo[bufnr].modified then
                 local choice = char_prompt(
                     string.format(
-                        'No write since last change for buffer %d (%s). Would you like to:\n' ..
-                        '(s)ave and close\n(i)gnore changes and close\n(c)ancel',
+                        'No write since last change for buffer %d (%s).',
                         bufnr, api.nvim_buf_get_name(bufnr)
-                    )
+                    ),
+                    {"&Save", "&Ignore", "&Cancel"}
                 )
 
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
@@ -64,17 +68,14 @@ local function buf_kill(range, force, wipeout)
                     target_buffers[bufnr] = nil
                 end
 
-                -- Clear message area.
-                cmd.echo('""')
-                cmd.redraw()
             elseif bo[bufnr].buftype == 'terminal'
             and vim.fn.jobwait({bo[bufnr].channel}, 0)[1] == -1 then
                 local choice = char_prompt(
                     string.format(
-                        'Terminal buffer %d (%s) is still running. Would you like to:\n' ..
-                        '(i)gnore and close\n(c)cancel',
+                        'Terminal buffer %d (%s) is still running.',
                         bufnr, api.nvim_buf_get_name(bufnr)
-                    )
+                    ),
+                    {"&Ignore", "&Cancel"}
                 )
 
                 if choice ~= 'i' and choice ~= 'I' then
