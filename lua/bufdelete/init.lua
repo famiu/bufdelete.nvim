@@ -9,6 +9,17 @@ end
 
 local M = {}
 
+-- Returns buffer name. Returns "[No Name]" if buffer is empty
+local function bufname(bufnr)
+    local name = api.nvim_buf_get_name(bufnr)
+
+    if name == '' then
+        return "[No Name]"
+    end
+
+    return name
+end
+
 -- Check if buffer needs deletion. Ensures that only loaded buffers are deleted while all valid
 -- buffers can be wiped out.
 local function buf_needs_deletion(bufnr, wipeout)
@@ -22,11 +33,11 @@ end
 -- Prompt user for choice.
 -- This captures the first character inputted after the prompt is shown and returns it.
 local function char_prompt(text, choices)
-    local choice = vim.fn.confirm(text, table.concat(choices, "\n"), "", "Q")
+    local choice = vim.fn.confirm(text, table.concat(choices, '\n'), '', 'Q')
     if choice == 0 then
-        return "C" -- Cancel if no choice was made
+        return 'C' -- Cancel if no choice was made
     else
-        return string.match(choices[choice], "&?(%a)")
+        return string.match(choices[choice], '&?(%a)')
     end
 end
 
@@ -57,9 +68,9 @@ local function buf_kill(range, force, wipeout)
                 local choice = char_prompt(
                     string.format(
                         'No write since last change for buffer %d (%s).',
-                        bufnr, api.nvim_buf_get_name(bufnr)
+                        bufnr, bufname(bufnr)
                     ),
-                    {"&Save", "&Ignore", "&Cancel"}
+                    {'&Save', '&Ignore', '&Cancel'}
                 )
 
                 if choice == 's' or choice == 'S' then  -- Save changes to the buffer.
@@ -73,9 +84,9 @@ local function buf_kill(range, force, wipeout)
                 local choice = char_prompt(
                     string.format(
                         'Terminal buffer %d (%s) is still running.',
-                        bufnr, api.nvim_buf_get_name(bufnr)
+                        bufnr, bufname(bufnr)
                     ),
-                    {"&Ignore", "&Cancel"}
+                    {'&Ignore', '&Cancel'}
                 )
 
                 if choice ~= 'i' and choice ~= 'I' then
@@ -87,7 +98,7 @@ local function buf_kill(range, force, wipeout)
 
     if next(target_buffers) == nil then
         -- No targets, do nothing
-        api.nvim_err_writeln("bufdelete.nvim: No buffers were deleted")
+        api.nvim_err_writeln('bufdelete.nvim: No buffers were deleted')
         return
     end
 
@@ -134,7 +145,7 @@ local function buf_kill(range, force, wipeout)
         switch_bufnr = api.nvim_create_buf(true, false)
 
         if switch_bufnr == 0 then
-            api.nvim_err_writeln("bufdelete.nvim: Failed to create buffer")
+            api.nvim_err_writeln('bufdelete.nvim: Failed to create buffer')
         end
     end
 
@@ -144,8 +155,8 @@ local function buf_kill(range, force, wipeout)
     end
 
     -- Trigger BDeletePre autocommand.
-    api.nvim_exec_autocmds("User", {
-        pattern = string.format("BDeletePre {%d,%d}", range[1], range[2])
+    api.nvim_exec_autocmds('User', {
+        pattern = string.format('BDeletePre {%d,%d}', range[1], range[2])
     })
     -- Close all target buffers one by one.
     for bufnr, _ in pairs(target_buffers) do
@@ -162,8 +173,8 @@ local function buf_kill(range, force, wipeout)
         end
     end
     -- Trigger BDeletePost autocommand.
-    api.nvim_exec_autocmds("User", {
-        pattern = string.format("BDeletePost {%d,%d}", range[1], range[2])
+    api.nvim_exec_autocmds('User', {
+        pattern = string.format('BDeletePost {%d,%d}', range[1], range[2])
     })
 end
 
@@ -176,7 +187,7 @@ local function find_buffer_with_pattern(pat, wipeout)
         end
     end
 
-    api.nvim_err_writeln("bufdelete.nvim: No matching buffer for " .. pat)
+    api.nvim_err_writeln('bufdelete.nvim: No matching buffer for ' .. pat)
 end
 
 local function get_range(buffer_or_range, wipeout)
@@ -232,8 +243,8 @@ local function buf_kill_cmd(opts, wipeout)
         end
     else
         if #opts.fargs == 1 then
-            api.nvim_err_writeln("bufdelete.nvim: Cannot use buffer name and buffer number at the "
-                                 .. "same time")
+            api.nvim_err_writeln('bufdelete.nvim: Cannot use buffer name and buffer number at the '
+                                 .. 'same time')
         else
             range = { opts.range == 2 and opts.line1 or opts.line2, opts.line2 }
         end
