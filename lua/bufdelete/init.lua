@@ -20,16 +20,6 @@ local function bufname(bufnr)
     return name
 end
 
--- Check if buffer needs deletion. Ensures that only loaded buffers are deleted while all valid
--- buffers can be wiped out.
-local function buf_needs_deletion(bufnr, wipeout)
-    if wipeout then
-        return api.nvim_buf_is_valid(bufnr)
-    else
-        return api.nvim_buf_is_loaded(bufnr)
-    end
-end
-
 -- Prompt user for choice.
 -- This captures the first character inputted after the prompt is shown and returns it.
 local function char_prompt(text, choices)
@@ -55,7 +45,7 @@ local function buf_kill(range, force, wipeout)
     -- Target buffers. Stored in a set-like format to quickly check if buffer needs to be deleted.
     local target_buffers = {}
     for bufnr=range[1], range[2] do
-        if buf_needs_deletion(bufnr, wipeout) then
+        if api.nvim_buf_is_valid(bufnr) then
             target_buffers[bufnr] = true
         end
     end
@@ -161,7 +151,7 @@ local function buf_kill(range, force, wipeout)
     -- Close all target buffers one by one.
     for bufnr, _ in pairs(target_buffers) do
         -- Check if buffer is still valid as it may be deleted due to options like bufhidden=wipe.
-        if buf_needs_deletion(bufnr, wipeout) then
+        if api.nvim_buf_is_valid(bufnr) then
             -- Only use force if buffer is modified, is a terminal or if `force` is true.
             local use_force = force or bo[bufnr].modified or bo[bufnr].buftype == 'terminal'
 
@@ -182,7 +172,7 @@ end
 -- Errors if buffer is not found.
 local function find_buffer_with_pattern(pat, wipeout)
     for _, bufnr in ipairs(api.nvim_list_bufs()) do
-        if buf_needs_deletion(bufnr, wipeout) and api.nvim_buf_get_name(bufnr):match(pat) then
+        if api.nvim_buf_is_valid(bufnr) and api.nvim_buf_get_name(bufnr):match(pat) then
             return bufnr
         end
     end
