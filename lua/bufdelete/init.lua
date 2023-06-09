@@ -229,7 +229,7 @@ function M.bufwipeout(buffer_or_range, force)
 end
 
 -- Wrapper around buf_kill for use with vim commands.
-local function buf_kill_cmd(opts, wipeout)
+function M._buf_kill_cmd(opts, wipeout)
     local range
     if opts.range == 0 then
         if #opts.fargs == 1 then  -- Buffer name is provided
@@ -251,11 +251,5 @@ local function buf_kill_cmd(opts, wipeout)
     end
     buf_kill(range, opts.bang, wipeout)
 end
-
--- Define Bdelete and Bwipeout.
-api.nvim_create_user_command('Bdelete', function(opts) buf_kill_cmd(opts, false) end,
-                                 { bang = true, count = true, addr = 'buffers', nargs = '?' })
-api.nvim_create_user_command('Bwipeout', function(opts) buf_kill_cmd(opts, true) end,
-                                 { bang = true, count = true, addr = 'buffers', nargs = '?' })
 
 return M
