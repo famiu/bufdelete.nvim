@@ -23,17 +23,8 @@ Steps to reproduce the behavior:
 **Expected behavior**
 A clear and concise description of what you expected to happen.
 
-**Does this error occur in the minimal init file?**
-Use the following commands to download the minimal init file provided by bufdelete:
-`curl -fLO https://raw.githubusercontent.com/famiu/bufdelete.nvim/master/minimal_init.lua`
-
-Modify the file to your needs (if necessary), then load Neovim using:
-`nvim --noplugin -u minimal_init.lua`
-
-And check if your issue still occurs.
-
-**Provide modified minimal_init.lua**
-If you modified the minimal_init.lua that bufdelete provides by default in order to fit your configuration, put it here. Otherwise ignore this part.
+**Provide a minimal configuration to reproduce the bug**
+Provide a minimal init.vim / init.lua that can be used to reproduce the bug. Only put what's absolutely necessary for the bug to occur in the minimal init, nothing else.
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
