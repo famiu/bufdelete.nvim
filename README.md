@@ -53,7 +53,7 @@ By default, when you delete buffers, bufdelete.nvim switches to a different buff
 ## User autocommands
 
 bufdelete.nvim triggers the following User autocommands (see `:help User` for more information):
-- `BDeletePre {range_start,range_end}` - Prior to deleting a buffer.
-- `BDeletePost {range_start,range_end}` - After deleting a buffer.
+- `BDeletePre <buffer>` - Prior to deleting a buffer.
+- `BDeletePost <buffer>` - After deleting a buffer.
 
-In both of these cases, `range_start` and `range_end` are replaced by the start and end of the buffer range, respectively. For example, if you use `require('bufdelete').bufdelete({1, 42})`, the autocommand patterns will be `BDeletePre {1,42}` and `BDeletePost {1,42}`.
+Note that the autocommands are triggered separately for each buffer. For example, if buffers 1 and 2 are deleted, there will be 2 autocommands for each of `BDeletePre` and `BDeletePost`, and their patterns will be `BDeletePre 1`, `BDeletePre 2` and `BDeletePost 1`, `BDeletePost 2`, respectively.
