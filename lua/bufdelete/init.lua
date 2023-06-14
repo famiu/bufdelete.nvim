@@ -152,25 +152,28 @@ end
 
 -- Get buffer handle from buffer name or handle
 local function get_buffer_handle(buffer_or_pat)
+    local bufnr
+
     if buffer_or_pat == nil then
-        return 0
+        bufnr = 0
+    elseif type(buffer_or_pat) == 'number' then
+        bufnr = buffer_or_pat
     elseif type(buffer_or_pat) == 'string' then
-        local bufnr = tonumber(buffer_or_pat)
+        bufnr = tonumber(buffer_or_pat)
 
         if bufnr ~= nil and math.floor(bufnr) == bufnr then
-            return bufnr
-        end
-
-        bufnr = find_buffer_with_pattern(buffer_or_pat)
-        if bufnr ~= nil then
-            return bufnr
+            bufnr = bufnr
         else
-            api.nvim_err_writeln('bufdelete.nvim: No matching buffer for ' .. buffer_or_pat)
+            bufnr = find_buffer_with_pattern(buffer_or_pat)
         end
+    end
+
+    if bufnr ~= nil and api.nvim_buf_is_valid(bufnr) then
+        return bufnr
     end
 end
 
-local function get_targets_from_range(left, right)
+local function get_target_buffers_from_range(left, right)
     local target_buffers = {}
 
     for i = left, right do
@@ -182,60 +185,41 @@ local function get_targets_from_range(left, right)
     return target_buffers
 end
 
--- Get array-like table containing a list of targets from a buffer name, number or range
-local function get_targets(buffer_or_range)
-    if type(buffer_or_range) == 'table' and #buffer_or_range == 2
-        and type(buffer_or_range[1]) == 'number' and buffer_or_range[1] > 0
-        and type(buffer_or_range[2]) == 'number' and buffer_or_range[2] > 0
-        and api.nvim_buf_is_valid(buffer_or_range[1])
-        and api.nvim_buf_is_valid(buffer_or_range[2])
-    then
-        -- Flip range if needed
-        if buffer_or_range[1] > buffer_or_range[2] then
-            buffer_or_range[1], buffer_or_range[2] = buffer_or_range[2], buffer_or_range[1]
-        end
-
-        return get_targets_from_range(buffer_or_range)
-    else
-        local bufnr = get_buffer_handle(buffer_or_range)
-
-        if bufnr == nil or not api.nvim_buf_is_valid(bufnr) then
-            api.nvim_err_writeln('bufdelete.nvim: Invalid bufnr or range value provided')
-            return
-        end
-
-        return { bufnr }
-    end
-end
-
--- Kill the target buffer(s) (or the current one if 0/nil) while retaining window layout.
--- Can accept range to kill multiple buffers.
-function M.bufdelete(buffer_or_range, force)
-    buf_kill(get_targets(buffer_or_range), force, false)
-end
-
--- Wipe the target buffer(s) (or the current one if 0/nil) while retaining window layout.
--- Can accept range to wipe multiple buffers.
-function M.bufwipeout(buffer_or_range, force)
-    buf_kill(get_targets(buffer_or_range), force, true)
-end
-
--- Wrapper around buf_kill for use with vim commands.
-function M._buf_kill_cmd(opts, wipeout)
+-- Get array-like table containing a list of buffer handles from a list of buffer names and handles.
+local function get_target_buffers(buffers)
     local target_buffers = {}
 
-    for _, v in ipairs(opts.fargs) do
+    for _, v in ipairs(buffers) do
         local bufnr = get_buffer_handle(v)
         if bufnr ~= nil then
             target_buffers[#target_buffers + 1] = bufnr
         end
     end
 
+    return target_buffers
+end
+
+-- Kill the target buffer(s) (or the current one if 0/nil) while retaining window layout.
+-- Can accept range to kill multiple buffers.
+function M.bufdelete(buffers, force)
+    buf_kill(get_target_buffers(buffers), force, false)
+end
+
+-- Wipe the target buffer(s) (or the current one if 0/nil) while retaining window layout.
+-- Can accept range to wipe multiple buffers.
+function M.bufwipeout(buffers, force)
+    buf_kill(get_target_buffers(buffers), force, true)
+end
+
+-- Wrapper around buf_kill for use with vim commands.
+function M._buf_kill_cmd(opts, wipeout)
+    local target_buffers = get_target_buffers(opts.fargs)
+
     if #opts.fargs == 0 or opts.range > 0 then
         local range_left = opts.range == 2 and opts.line1 or opts.line2
         local range_right = opts.line2
 
-        local new_targets = get_targets_from_range(range_left, range_right)
+        local new_targets = get_target_buffers_from_range(range_left, range_right)
 
         for _, v in ipairs(new_targets) do
             target_buffers[#target_buffers + 1] = v

@@ -24,9 +24,9 @@ Plug 'famiu/bufdelete.nvim'
 
 ## Usage
 
-bufdelete.nvim is quite straightforward to use. It provides two commands, `:Bdelete` and `:Bwipeout`. They work similarly to `:bdelete` and `:bwipeout`, except they keep your window layout intact. It's also possible to use `:Bdelete!` or `:Bwipeout!` to force the deletion. You may also pass a buffer number, range or buffer name / regexp to either of those two commands.
+bufdelete.nvim is quite straightforward to use. It provides two commands, `:Bdelete` and `:Bwipeout`. They work exactly the same as `:bdelete` and `:bwipeout`, except they keep your window layout intact.
 
-There's also two Lua functions provided by bufdelete.nvim, `bufdelete` and `bufwipeout`, which do the same thing as their command counterparts. Both of them take two arguments, `buffer_or_range` and `force`. `buffer_or_range` is the buffer number (e.g. `12`), buffer name / regexp (e.g. `foo.txt` or `^bar.txt$`) or a range, which is a table containing two buffer numbers (e.g. `{7, 13}`). `force` determines whether to force the deletion or not. If `buffer_or_range` is either `0` or `nil`, it deletes the current buffer instead. Note that you can't use `0` or `nil` if `buffer_or_range` is a range.
+There's also two Lua functions provided by bufdelete.nvim, `bufdelete` and `bufwipeout`, which do the same thing as their command counterparts. Both of them take two arguments, `buffers` and `force`. `buffers` is either a single buffer number, buffer name or regexp pattern (e.g. `"foo.txt"`, `"^bar.txt$"`, etc.), or a list of buffer numbers, names or patterns. `force` determines whether to force the deletion or not. A buffer number of 0 represents the current buffer. Moreover, if `buffers` is nil, it also deletes the current buffer.
 
 If deletion isn't being forced, you're instead prompted for action for every modified buffer.
 
@@ -39,11 +39,14 @@ require('bufdelete').bufdelete(0, true)
 -- Wipeout buffer number 100 without force
 require('bufdelete').bufwipeout(100)
 
--- Delete every buffer from buffer 7 to buffer 30 without force
+-- Delete buffer 7 and 30 without force.
 require('bufdelete').bufdelete({7, 30})
 
 -- Delete buffer matching foo.txt with force
 require('bufdelete').bufdelete("foo.txt", true)
+
+-- Delete buffer matching foo.txt, buffer matching bar.txt and buffer 3 with force
+require('bufdelete').bufdelete({"foo.txt", "bar.txt", 3}, true)
 ```
 
 ## Behavior
