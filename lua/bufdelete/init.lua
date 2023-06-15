@@ -187,6 +187,10 @@ end
 
 -- Get array-like table containing a list of buffer handles from a list of buffer names and handles.
 local function get_target_buffers(buffers)
+    if type(buffers) ~= 'table' then
+        return { get_buffer_handle(buffers) }
+    end
+
     local target_buffers = {}
 
     for _, v in ipairs(buffers) do
