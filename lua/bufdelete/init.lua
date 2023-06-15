@@ -168,6 +168,10 @@ local function get_buffer_handle(buffer_or_pat)
         end
     end
 
+    if bufnr == 0 then
+        bufnr = api.nvim_get_current_buf()
+    end
+
     if bufnr ~= nil and api.nvim_buf_is_valid(bufnr) then
         return bufnr
     end
