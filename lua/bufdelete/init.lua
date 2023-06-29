@@ -1,8 +1,9 @@
 local api = vim.api
 local cmd = vim.cmd
+local fn = vim.fn
 local bo = vim.bo
 
-if vim.fn.has('nvim-0.8') == 0 then
+if fn.has('nvim-0.8') == 0 then
     api.nvim_err_writeln('bufdelete.nvim is only available for Neovim versions 0.8 and above')
     return
 end
@@ -23,7 +24,7 @@ end
 -- Prompt user for choice.
 -- This captures the first character inputted after the prompt is shown and returns it.
 local function char_prompt(text, choices)
-    local choice = vim.fn.confirm(text, table.concat(choices, '\n'), '', 'Q')
+    local choice = fn.confirm(text, table.concat(choices, '\n'), '', 'Q')
     if choice == 0 then
         return 'C' -- Cancel if no choice was made
     else
@@ -59,7 +60,7 @@ local function buf_kill(target_buffers, force, wipeout)
                 end
 
             elseif bo[bufnr].buftype == 'terminal'
-            and vim.fn.jobwait({bo[bufnr].channel}, 0)[1] == -1 then
+            and fn.jobwait({bo[bufnr].channel}, 0)[1] == -1 then
                 local choice = char_prompt(
                     string.format(
                         'Terminal buffer %d (%s) is still running.',
@@ -100,10 +101,18 @@ local function buf_kill(target_buffers, force, wipeout)
     -- Switch the windows containing the target buffers to a buffer that's not going to be closed.
     -- Create a new buffer if necessary.
     local switch_bufnr
-    -- If there are buffers that are not going to be deleted, just switch all target windows to one
-    -- of them.
+    -- If there are buffers that are not going to be deleted, just switch all target windows to the
+    -- most recently used undeleted buffer
     if #undeleted_buffers > 0 then
-        switch_bufnr = undeleted_buffers[1]
+        local switch_bufnr_lastused = -1
+
+        for _, bufnr in ipairs(undeleted_buffers) do
+            local bufinfo = fn.getbufinfo(bufnr)[1]
+            if bufinfo.lastused > switch_bufnr_lastused then
+                switch_bufnr = bufnr
+                switch_bufnr_lastused = bufinfo.lastused
+            end
+        end
     -- Otherwise create a new buffer and switch all windows to it.
     else
         switch_bufnr = api.nvim_create_buf(true, false)
