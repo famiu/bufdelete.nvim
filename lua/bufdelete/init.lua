@@ -93,7 +93,7 @@ local function buf_kill(target_buffers, force, wipeout)
     -- Get list of valid and listed buffers that will not be deleted
     local undeleted_buffers = vim.tbl_filter(
         function(buf)
-            return api.nvim_buf_is_valid(buf) and bo[buf].buflisted and not buf_is_deleted[buf]
+            return api.nvim_buf_is_valid(buf) and bo[buf].buflisted and not buf_is_deleted[buf] and bo[buf].buftype == ''
         end,
         api.nvim_list_bufs()
     )
