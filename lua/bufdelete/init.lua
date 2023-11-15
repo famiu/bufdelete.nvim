@@ -10,6 +10,55 @@ end
 
 local M = {}
 
+local DEFAULT_OPTS = { -- BEGIN_DEFAULT_OPTS
+  buffer_exclude_buftype = {
+    'help',
+    'nofile',
+    'prompt',
+    'quickfix',
+    'terminal'
+  },
+  buffer_exclude_filetype = {
+    'DiffviewFiles',
+    'Mundo',
+    'MundoDiff',
+    'NeogitStatus',
+    'NvimTree',
+    'Outline',
+    'SidebarNvim',
+    'TelescopePrompt',
+    'Trouble',
+    'far',
+    'fugitive',
+    'fugitiveblame',
+    'help',
+    'gitmessengerpopup',
+    'lspinfo',
+    'minimap',
+    'packer',
+    'qf',
+    'rnvimr',
+    'spectre_panel',
+    'tabman',
+    'tagbar',
+    'toggleterm',
+    'vista_kind'
+  }
+} -- END_DEFAULT_OPTS
+
+local function merge_options(conf)
+  return vim.tbl_deep_extend("force", DEFAULT_OPTS, conf or {})
+end
+
+-- Set up default options on module load.
+M.config = merge_options({})
+
+-- Setup user defined options
+function M.setup(conf)
+  local opts = merge_options(conf)
+  M.config = opts
+end
+
 -- Returns buffer name. Returns "[No Name]" if buffer is empty
 local function bufname(bufnr)
     local name = api.nvim_buf_get_name(bufnr)
@@ -92,8 +141,12 @@ local function buf_kill(target_buffers, force, wipeout)
 
     -- Get list of valid and listed buffers that will not be deleted
     local undeleted_buffers = vim.tbl_filter(
-        function(buf)
-            return api.nvim_buf_is_valid(buf) and bo[buf].buflisted and not buf_is_deleted[buf]
+        function(bufnr)
+            return api.nvim_buf_is_valid(bufnr)
+                   and bo[bufnr].buflisted
+                   and not buf_is_deleted[bufnr]
+                   and not vim.tbl_contains(M.config.buffer_exclude_buftype, bo[bufnr].buftype)
+                   and not vim.tbl_contains(M.config.buffer_exclude_filetype, bo[bufnr].filetype)
         end,
         api.nvim_list_bufs()
     )
