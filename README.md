@@ -22,11 +22,28 @@ use 'famiu/bufdelete.nvim'
 Plug 'famiu/bufdelete.nvim'
 ```
 
+## Configuration
+
+bufdelete.nvim provides the following configuration variables:
+
+- `g:bufdelete_buf_filter` (Vim script) / `vim.g.bufdelete_buf_filter` (Lua):
+
+  Function that determines buffers that bufdelete.nvim can switch to, instead of the default behavior of switching to any buffer. Must be a function that takes no argument and returns a list of buffers.
+
 ## Usage
 
 bufdelete.nvim is quite straightforward to use. It provides two commands, `:Bdelete` and `:Bwipeout`. They work exactly the same as `:bdelete` and `:bwipeout`, except they keep your window layout intact.
 
-There's also two Lua functions provided by bufdelete.nvim, `bufdelete` and `bufwipeout`, which do the same thing as their command counterparts. Both of them take two arguments, `buffers` and `force`. `buffers` is either a single buffer number, buffer name or regexp pattern (e.g. `"foo.txt"`, `"^bar.txt$"`, etc.), or a list of buffer numbers, names or patterns. `force` determines whether to force the deletion or not. A buffer number of 0 represents the current buffer. Moreover, if `buffers` is nil, it also deletes the current buffer.
+There's also two Lua functions provided by bufdelete.nvim, `bufdelete` and `bufwipeout`, which do the same thing as their command counterparts. Both of them take three arguments, `buffers`, `force` and `switchable_buffer_list`.
+
+- `buffers` (`number`|`string`|`number[]`|`string[]`, optional): Either a single buffer number, buffer name or regexp pattern (e.g. `"foo.txt"`, `"^bar.txt$"`, etc.), or a list of buffer numbers, names or patterns. A buffer number of 0 represents the current buffer.<br>
+  Default: `0`.
+
+- `force` (`boolean`, optional): Whether to force the deletion or not.<br>
+  Default: `false`.
+
+- `switchable_buffer_list` (`number[]`, optional): List of buffers that bufdelete.nvim can switch to after deleting the target buffers. Overrides `g:bufdelete_buf_filter` if provided.<br>
+  Default: `nil`.
 
 If deletion isn't being forced, you're instead prompted for action for every modified buffer.
 
@@ -47,6 +64,9 @@ require('bufdelete').bufdelete("foo.txt", true)
 
 -- Delete buffer matching foo.txt, buffer matching bar.txt and buffer 3 with force
 require('bufdelete').bufdelete({"foo.txt", "bar.txt", 3}, true)
+
+-- Delete current buffer and switch to one of buffer 3, 5 or 10
+require('bufdelete').bufdelete(0, false, { 3, 5, 10 })
 ```
 
 ## Behavior
