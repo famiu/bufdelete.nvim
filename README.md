@@ -34,7 +34,7 @@ bufdelete.nvim provides the following configuration variables:
 
 bufdelete.nvim is quite straightforward to use. It provides two commands, `:Bdelete` and `:Bwipeout`. They work exactly the same as `:bdelete` and `:bwipeout`, except they keep your window layout intact.
 
-There's also two Lua functions provided by bufdelete.nvim, `bufdelete` and `bufwipeout`, which do the same thing as their command counterparts. Both of them take three arguments, `buffers`, `force` and `switchable_buffer_list`.
+There's also two Lua functions provided by bufdelete.nvim, `bufdelete` and `bufwipeout`, which do the same thing as their command counterparts. Both of them take three arguments, `buffers`, `force` and `switchable_buffers`.
 
 - `buffers` (`number`|`string`|`number[]`|`string[]`, optional): Either a single buffer number, buffer name or regexp pattern (e.g. `"foo.txt"`, `"^bar.txt$"`, etc.), or a list of buffer numbers, names or patterns. A buffer number of 0 represents the current buffer.<br>
   Default: `0`.
@@ -42,7 +42,7 @@ There's also two Lua functions provided by bufdelete.nvim, `bufdelete` and `bufw
 - `force` (`boolean`, optional): Whether to force the deletion or not.<br>
   Default: `false`.
 
-- `switchable_buffer_list` (`number[]`, optional): List of buffers that bufdelete.nvim can switch to after deleting the target buffers. Overrides `g:bufdelete_buf_filter` if provided.<br>
+- `switchable_buffers` (`number[]`, optional): List of buffers that bufdelete.nvim can switch to after deleting the target buffers. Overrides `g:bufdelete_buf_filter` if provided.<br>
   Default: `nil`.
 
 If deletion isn't being forced, you're instead prompted for action for every modified buffer.
