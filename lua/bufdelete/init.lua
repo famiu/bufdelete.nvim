@@ -33,7 +33,7 @@ local function char_prompt(text, choices)
 end
 
 -- Common kill function for Bdelete and Bwipeout.
-local function buf_kill(target_buffers, force, wipeout)
+local function buf_kill(target_buffers, buffer_list, force, wipeout)
     -- Target buffers. Stored in a set-like format to quickly check if buffer needs to be deleted.
     local buf_is_deleted = {}
     for _, v in ipairs(target_buffers) do
@@ -83,20 +83,28 @@ local function buf_kill(target_buffers, force, wipeout)
     end
 
     -- Get list of windows IDs with the buffers to close.
-    local windows = vim.tbl_filter(
-        function(win)
-            return buf_is_deleted[api.nvim_win_get_buf(win)] ~= nil
-        end,
-        api.nvim_list_wins()
-    )
+    local windows = vim.tbl_filter(function(win)
+        return buf_is_deleted[api.nvim_win_get_buf(win)] ~= nil
+    end, api.nvim_list_wins())
 
-    -- Get list of valid and listed buffers that will not be deleted
-    local undeleted_buffers = vim.tbl_filter(
-        function(buf)
-            return api.nvim_buf_is_valid(buf) and bo[buf].buflisted and not buf_is_deleted[buf]
-        end,
-        api.nvim_list_bufs()
-    )
+    -- If buffer_list is provided by user, use it.
+    -- Otherwise, if vim.g.bufdelete_buf_filter is non-nil, use it to generate a buffer list.
+    -- Otherwise, just use a list of all valid and listed buffers.
+    if buffer_list ~= nil then
+        -- Nothing to do.
+    elseif vim.g.bufdelete_buf_filter ~= nil then
+        buffer_list = vim.g.bufdelete_buf_filter()
+    else
+        -- Get list of valid and listed buffers.
+        buffer_list = vim.tbl_filter(function(buf)
+            return api.nvim_buf_is_valid(buf) and bo[buf].buflisted
+        end, api.nvim_list_bufs())
+    end
+
+    -- Filter buffers targeted for deletion from the buffer list.
+    local undeleted_buffers = vim.tbl_filter(function(buf)
+        return not buf_is_deleted[buf]
+    end, buffer_list)
 
     -- Switch the windows containing the target buffers to a buffer that's not going to be closed.
     -- Create a new buffer if necessary.
@@ -218,14 +226,14 @@ end
 
 -- Kill the target buffer(s) (or the current one if 0/nil) while retaining window layout.
 -- Can accept range to kill multiple buffers.
-function M.bufdelete(buffers, force)
-    buf_kill(get_target_buffers(buffers), force, false)
+function M.bufdelete(buffers, force, buffer_list)
+    buf_kill(get_target_buffers(buffers), buffer_list, force, false)
 end
 
 -- Wipe the target buffer(s) (or the current one if 0/nil) while retaining window layout.
 -- Can accept range to wipe multiple buffers.
-function M.bufwipeout(buffers, force)
-    buf_kill(get_target_buffers(buffers), force, true)
+function M.bufwipeout(buffers, force, buffer_list)
+    buf_kill(get_target_buffers(buffers), buffer_list, force, true)
 end
 
 -- Wrapper around buf_kill for use with vim commands.
